@@ -1,5 +1,6 @@
 import os
 import logging
+import time
 from openai import OpenAI
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
@@ -10,7 +11,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Получаем ключи из переменных окружения (ИХ НЕ ВСТАВЛЯЕМ В КОД!)
+# Получаем ключи из переменных окружения
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -20,7 +21,7 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-# Словарь для хранения истории переписки для каждого пользователя
+# Словарь для хранения истории переписки (в оперативной памяти)
 conversation_histories = {}
 
 # Команда /start
@@ -67,8 +68,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         error_msg = f"Извини, что-то пошло не так. Ошибка: {e}"
         await context.bot.send_message(chat_id=chat_id, text=error_msg)
 
-# Запуск бота
+# === ЗАПУСК БОТА ===
 if __name__ == '__main__':
+    # ВАЖНО: Эта строчка убивает старый процесс перед запуском нового
+    time.sleep(3) 
+    
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     
     application.add_handler(CommandHandler('start', start))
