@@ -4,16 +4,15 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 import google.generativeai as genai
 
-# Твои ключи (вставь прямо сюда)
-TELEGRAM_TOKEN = ""
-GEMINI_API_KEY = ""
+# Получаем ключи из переменных окружения Render
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Настройка Gemini
 genai.configure(api_key=GEMINI_API_KEY)
-# Используем быструю и бесплатную модель Flash
 model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
-    system_instruction="Ты — близкий друг и собеседник в личных сообщениях. Общайся исключительно на «ты». Никогда не говори, что ты ИИ, бот или языковая модель. Твой тон — живой, теплый, поддерживающий."
+    system_instruction="Ты – близкий друг и собеседник в личных сообщениях. Общайся исключительно на «ты». Никогда не говори, что ты ИИ, бот или языковая модель. Твой тон – живой, теплый, поддерживающий."
 )
 
 bot = Bot(token=TELEGRAM_TOKEN)
@@ -27,7 +26,6 @@ async def cmd_start(message: types.Message):
 async def chat_with_bot(message: types.Message):
     user_text = message.text
     try:
-        # Отправляем сообщение нейросети
         response = model.generate_content(user_text)
         await message.answer(response.text)
     except Exception as e:
