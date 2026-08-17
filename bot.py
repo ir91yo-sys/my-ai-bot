@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from google import genai
 
-# Настройка веб-сервера для Render (чтобы он видел открытый порт)
+# Настройка веб-сервера для Render
 async def handle(request):
     return web.Response(text="Bot is running!")
 
@@ -15,7 +15,6 @@ async def web_server():
     runner = web.AppRunner(app)
     await runner.setup()
     
-    # Render передает порт через переменную окружения PORT
     port = int(os.environ.get("PORT", 8080))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
@@ -33,7 +32,7 @@ async def cmd_start(message: types.Message):
 async def send_ai_response(message: types.Message):
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.6-flash',
             contents=message.text,
         )
         await message.answer(response.text)
@@ -42,7 +41,6 @@ async def send_ai_response(message: types.Message):
         await message.answer("Ой, что-то пошло не так, попробуй еще раз чуть позже.")
 
 async def main():
-    # Запускаем и веб-сервер для Render, и телеграм-бота одновременно
     await web_server()
     await dp.start_polling(bot)
 
