@@ -1,14 +1,28 @@
 import os
 import asyncio
+from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from google import genai
 
+# Настройка веб-сервера для Render (чтобы он видел открытый порт)
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+async def web_server():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    # Render передает порт через переменную окружения PORT
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
 # Инициализация бота и клиента Gemini
 bot = Bot(token=os.getenv("TELEGRAM_TOKEN"))
 dp = Dispatcher()
-
-# Новый клиент корректно подхватывает ключ из переменной окружения GEMINI_API_KEY
 client = genai.Client()
 
 @dp.message(Command("start"))
@@ -18,7 +32,6 @@ async def cmd_start(message: types.Message):
 @dp.message()
 async def send_ai_response(message: types.Message):
     try:
-        # Отправляем запрос к актуальной модели gemini-2.5-flash
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=message.text,
@@ -29,6 +42,8 @@ async def send_ai_response(message: types.Message):
         await message.answer("Ой, что-то пошло не так, попробуй еще раз чуть позже.")
 
 async def main():
+    # Запускаем и веб-сервер для Render, и телеграм-бота одновременно
+    await web_server()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
