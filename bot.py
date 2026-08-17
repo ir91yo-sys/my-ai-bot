@@ -70,14 +70,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # === ЗАПУСК БОТА ===
 if __name__ == '__main__':
-    # ВАЖНО: Эта строчка убивает старый процесс перед запуском нового
-    time.sleep(3) 
+    # Даем время убить старые процессы
+    time.sleep(5) 
     
+    print("Запускаем бота...")
+    
+    # Создаем приложение и запускаем его в режиме вебхука, а не поллинга
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('clear', clear_history))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("Бот-собеседник запущен!")
-    application.run_polling()
+    # Запуск в "веб-режиме" (идеально для Render)
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 8080)),
+        webhook_url=f"https://{os.environ.get('RENDER_EXTERNAL_URL', 'localhost')}/webhook"
+    )
